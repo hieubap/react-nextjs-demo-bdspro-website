@@ -5,7 +5,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
-            <img src="/bdspro-logo-white.png" alt="BDSPro Logo" className="h-10 mb-4" />
+            <div className="flex mb-4">
+            <div className="p-[8px] bg-white rounded-[4px] border-1">
+              <img src="/bdspro-logo-ngang.png" alt="BDSPro Logo" className="h-12" />
+            </div>
+            </div>
+            
             <p className="text-gray-300 mb-4 max-w-md">
               BDSPro - Giải pháp phần mềm quản lý bất động sản hàng đầu Việt Nam. Giúp doanh nghiệp tối ưu hóa quy trình
               và tăng hiệu quả kinh doanh.
