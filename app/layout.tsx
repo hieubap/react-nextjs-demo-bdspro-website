@@ -4,9 +4,9 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: 'BDSPro',
+  description: 'BDSPro - Giải pháp phần mềm quản lý bất động sản hàng đầu Việt Nam.',
+  generator: 'BDSPro',
 }
 
 export default function RootLayout({

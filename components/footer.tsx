@@ -65,7 +65,7 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Hỗ trợ</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                <a href="/huong-dan-su-dung" className="text-gray-300 hover:text-white transition-colors">
                   Hướng dẫn sử dụng
                 </a>
               </li>
@@ -80,7 +80,7 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                <a href="/dieu-khoan-su-dung" className="text-gray-300 hover:text-white transition-colors">
                   Điều khoản sử dụng
                 </a>
               </li>
