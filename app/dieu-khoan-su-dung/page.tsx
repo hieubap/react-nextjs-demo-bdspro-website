@@ -12,7 +12,7 @@ export default function DieuKhoanSuDung() {
               <ArrowLeft className="h-5 w-5" />
               <span>Quay lại trang chủ</span>
             </Link>
-            <img src="/bdspro-logo-real-estate-software.png" alt="BDSPro Logo" className="h-8" />
+            <img src="/bdspro-logo-ngang.png" alt="BDSPro Logo" className="h-8" />
           </div>
         </div>
       </header>
