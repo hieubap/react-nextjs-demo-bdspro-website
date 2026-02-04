@@ -1,0 +1,68 @@
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "BDSPro",
+  "description": "BDSPro - Giải pháp phần mềm quản lý bất động sản hàng đầu Việt Nam. Hệ thống quản lý khách hàng, dự án, hợp đồng và báo cáo toàn diện.",
+  "url": "https://bdspro.vn",
+  "logo": "https://bdspro.vn/bdspro-logo-ngang.png",
+  "image": [
+    "https://bdspro.vn/bdspro-logo-ngang.png",
+    "https://bdspro.vn/real-estate-dashboard.png"
+  ],
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "VND",
+    "availability": "https://schema.org/InStock"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "BDSPro Team",
+    "url": "https://bdspro.vn"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "BDSPro",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://bdspro.vn/bdspro-logo-ngang.png"
+    }
+  },
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+84-1900-1234",
+    "contactType": "customer service",
+    "email": "contact@bdspro.vn",
+    "availableLanguage": ["Vietnamese", "English"]
+  },
+  "sameAs": [
+    "https://www.facebook.com/bdspro",
+    "https://www.instagram.com/bdspro",
+    "https://www.linkedin.com/company/bdspro",
+    "https://twitter.com/bdspro",
+    "https://www.youtube.com/channel/bdspro",
+    "https://zalo.me/bdspro"
+  ],
+  "keywords": "phần mềm bất động sản, quản lý bds, BDSPro, real estate software, phần mềm quản lý dự án, quản lý khách hàng",
+  "inLanguage": "vi",
+  "datePublished": "2024-01-01",
+  "dateModified": "2024-12-19",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "150"
+  },
+  "softwareVersion": "2.0",
+  "downloadUrl": "https://bdspro.vn/download",
+  "screenshot": "https://bdspro.vn/real-estate-dashboard.png",
+  "featureList": [
+    "Quản lý khách hàng",
+    "Quản lý dự án bất động sản",
+    "Quản lý hợp đồng",
+    "Báo cáo và thống kê",
+    "Dashboard trực quan",
+    "Tích hợp CRM"
+  ]
+}
