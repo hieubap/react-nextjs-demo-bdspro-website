@@ -1,0 +1,11 @@
+
+Datasets count:	1
+Data size:	1 KB
+File formats:	MVT - Mapbox Vector Tiles (directory based), MBTiles (MVT - Mapbox Vector Tiles)
+Data type:	vector
+Layers count:	1
+Geometry type:	Polygon
+Features count:	14
+Coord. system:	
+Coord. units:	
+Extent (orig):	0, 0, 4096, 4096

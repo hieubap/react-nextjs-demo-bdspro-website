@@ -1,8 +1,8 @@
-server=root@103.172.239.89
-path=/root/server/bdspro-landing-page
+server=root@14.225.210.29
+path=/root/server/nextjs-landing-page
 yarn build
 
-ssh $server 'mkdir -p /root/server/bdspro-landing-page
+ssh $server 'mkdir -p /root/server/nextjs-landing-page
 cd '$path'
 rm -rf .next
 '
@@ -14,8 +14,8 @@ scp -r ./public $server:$path/
 
 ssh $server '
 cd '$path'
-container_name=bdspro-landing-page
-port=3102
+container_name=nextjs-landing-page
+port=3103
 container=$(docker ps -a -q --filter name="$container_name")
 echo "Container ID: $container"
 
@@ -28,8 +28,8 @@ echo "Container ID: $container"
 
 # Build và chạy container mới
 echo "Build và chạy container mới..."
-# docker build --no-cache -t "$container_name" .
-# docker run -t -d -p $port:3000 --name "$container_name" "$container_name"
+docker build --no-cache -t "$container_name" .
+docker run --read-only -t -d -p $port:3000 --name "$container_name" "$container_name"
     
 # xóa build cũ trong container và copy build mới vào
 if [ ! -z "$container" ]; then

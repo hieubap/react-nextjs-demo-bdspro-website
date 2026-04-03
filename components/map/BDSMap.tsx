@@ -7,6 +7,7 @@ import { MapContainer, Polygon, TileLayer, useMap } from "react-leaflet";
 import { useLeafletPlugins } from "@/src/map/map.hook";
 import { Point } from "leaflet";
 import { Marker, Popup } from "react-leaflet";
+import { tinhData } from "@/public/data/tinhVN";
 
 function MapLogic({ drawEnabled }: { drawEnabled: boolean }) {
   const map = useMap();
@@ -325,7 +326,7 @@ export default function BDSMap() {
         })} */}
 
         {/* Render tinhData polygons */}
-        {/* {tinhData.features.map((feature, index) => {
+        {tinhData.features.map((feature, index) => {
           if (feature.geometry.type === "MultiPolygon") {
             return feature.geometry.coordinates.map((polygon, polyIndex) => (
               <Polygon
@@ -339,7 +340,7 @@ export default function BDSMap() {
             ));
           }
           return null;
-        })} */}
+        })}
 
         {polygonCoords?.length > 0 && (
           <Polygon
