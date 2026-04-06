@@ -28,8 +28,6 @@ echo "Container ID: $container"
 
 # Build và chạy container mới
 echo "Build và chạy container mới..."
-docker build --no-cache -t "$container_name" .
-docker run --read-only -t -d -p $port:3000 --name "$container_name" "$container_name"
     
 # xóa build cũ trong container và copy build mới vào
 if [ ! -z "$container" ]; then
