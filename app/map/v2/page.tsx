@@ -1,519 +1,326 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import maplibregl, {
-  Map,
-  NavigationControl,
-  ScaleControl,
-  StyleSpecification,
-} from "maplibre-gl";
+import React, { useRef, useEffect, useState } from "react";
+import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import MapControlLayer from "@/src/map/MapControlLayer";
 
-// ─── CONFIG ──────────────────────────────────────────────────────────────────
-// Thay các giá trị này cho phù hợp với hạ tầng của bạn
-const STYLE_JSON_URL = "http://14.225.210.29:8002/v1/map/config/style.json"; // hoặc URL đầy đủ
-const DEFAULT_CENTER: [number, number] = [105.8412, 21.0245]; // Hà Nội
-const DEFAULT_ZOOM = 12;
-const DEFAULT_MIN_ZOOM = 0;
-const DEFAULT_MAX_ZOOM = 22;
+const MapPage: React.FC = () => {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
 
-const OVERLAY_LAYER_IDS = [
-  "province_boundary_line",
-  "ward_boundary_line",
-  "ranhthua_tq_line",
-] as const;
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface MapInfo {
-  zoom: number;
-  center: { lng: number; lat: number };
-  bearing: number;
-  pitch: number;
-}
-
-export default function MapPage() {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<Map | null>(null);
-  const [mapInfo, setMapInfo] = useState<MapInfo>({
-    zoom: DEFAULT_ZOOM,
-    center: { lng: DEFAULT_CENTER[0], lat: DEFAULT_CENTER[1] },
-    bearing: 0,
-    pitch: 0,
+  // Style URL (có cache-busting để dễ reload khi regenerate style.json)
+  const [styleUrl] = useState(
+    "http://14.225.210.29:8002/v1/map/config/style.json?_=" + Date.now()
+  );
+  // State để lưu tọa độ và tile z/x/y
+  const [coords, setCoords] = useState({
+    lat: 0,
+    lng: 0,
+    z: 0,
+    x: 0,
+    y: 0,
   });
-  const [styleLoaded, setStyleLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [layerCount, setLayerCount] = useState(0);
-  const [sourceCount, setSourceCount] = useState(0);
-  const [overlayProgress, setOverlayProgress] = useState(0.65);
-  const [currentLocationActive, setCurrentLocationActive] = useState(false);
-  const [overlayLayersVisible, setOverlayLayersVisible] = useState(true);
 
-  // Cập nhật HUD khi bản đồ di chuyển
-  const updateMapInfo = useCallback((map: Map) => {
-    const center = map.getCenter();
-    setMapInfo({
-      zoom: Math.round(map.getZoom() * 100) / 100,
-      center: {
-        lng: Math.round(center.lng * 100000) / 100000,
-        lat: Math.round(center.lat * 100000) / 100000,
+  // Hàm tính tile từ lat/lng và zoom
+  const latLngToTile = (lat: number, lng: number, zoom: number) => {
+    const z = zoom;
+    const x = ((lng + 180) / 360) * Math.pow(2, z);
+    const y =
+      ((1 -
+        Math.log(
+          Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)
+        ) /
+          Math.PI) /
+        2) *
+      Math.pow(2, z);
+    return { z, x, y };
+  };
+
+  const LAYER_CONFIGS = [
+    {
+      id: "ranhthua_tq_line",
+      label: "Ranh thửa",
+      source: {
+        id: "ranhthua_tq",
+        def: {
+          type: "vector",
+          tiles: [
+            "http://14.225.210.29:8002/v1/map/mid/rt_toanquoc/{z}/{x}/{y}.pbf",
+          ],
+          minzoom: 16,
+          maxzoom: 19,
+        },
       },
-      bearing: Math.round(map.getBearing() * 10) / 10,
-      pitch: Math.round(map.getPitch() * 10) / 10,
+      layer: {
+        id: "ranhthua_tq_line",
+        type: "line",
+        "source-layer": "ranhthua_tq",
+        paint: {
+          "line-color": "#facc15",
+          "line-width": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            12,
+            0.3,
+            16,
+            0.8,
+            20,
+            1.5,
+          ],
+          "line-opacity": 0.7,
+        },
+      },
+    },
+    // ================= QH_SDD =================
+    {
+      id: "qh_sdd_raster",
+      label: "Quy hoạch SDĐ",
+      source: {
+        id: "qh_sdd",
+        def: {
+          type: "raster",
+          tiles: [
+            "http://14.225.210.29:8002/v1/map/layer/qh_sdd/{z}/{x}/{y}.png",
+          ],
+          tileSize: 256, // 🔥 quan trọng
+          minzoom: 0,
+          maxzoom: 19,
+        },
+      },
+      layer: {
+        id: "qh_sdd_raster",
+        type: "raster",
+        paint: {
+          "raster-opacity": 0.7, // chỉnh độ trong suốt
+        },
+      },
+    },
+
+    // 👉 thêm layer khác ở đây
+  ];
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: styleUrl,
+      center: [105.84117, 21.0245], // Hà Nội
+      zoom: 5,
+      minZoom: 4,
+      maxZoom: 18,
+      attributionControl: true,
     });
-  }, []);
 
-  useEffect(() => {
-    if (!mapContainer.current || mapRef.current) return;
+    mapRef.current = map;
 
-    let map: Map;
-
-    const initMap = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Load style.json từ server / public folder
-        const styleRes = await fetch(STYLE_JSON_URL);
-        if (!styleRes.ok) {
-          throw new Error(
-            `Không tải được style.json: ${styleRes.status} ${styleRes.statusText}`
-          );
-        }
-        const style: StyleSpecification = await styleRes.json();
-
-        // Patch sprite & glyphs nếu dùng đường dẫn tương đối
-        if (style.sprite && !style.sprite.startsWith("http")) {
-          style.sprite = window.location.origin + style.sprite;
-        }
-        if (style.glyphs && !style.glyphs.startsWith("http")) {
-          style.glyphs = window.location.origin + style.glyphs;
-        }
-
-        // Khởi tạo bản đồ MapLibre
-        map = new maplibregl.Map({
-          container: mapContainer.current!,
-          style,
-          center: DEFAULT_CENTER,
-          zoom: DEFAULT_ZOOM,
-          minZoom: DEFAULT_MIN_ZOOM,
-          maxZoom: DEFAULT_MAX_ZOOM,
-          attributionControl: false,
-          antialias: true,
-        });
-
-        mapRef.current = map;
-
-        // Controls — giống Android MapLibre
-        map.addControl(
-          new NavigationControl({ visualizePitch: true }),
-          "top-right"
-        );
-        map.addControl(new ScaleControl({ unit: "metric" }), "bottom-left");
-        map.addControl(
-          new maplibregl.AttributionControl({ compact: true }),
-          "bottom-right"
-        );
-
-        // Sự kiện
-        map.on("load", () => {
-          setStyleLoaded(true);
-  setLoading(false);
-
-  const style = map.getStyle();
-  setLayerCount(style.layers?.length ?? 0);
-  setSourceCount(Object.keys(style.sources ?? {}).length);
-
-  updateMapInfo(map);
-
-  // ─── ADD VECTOR SOURCES ─────────────────────────────
-  map.addSource("province_boundary", {
-    type: "vector",
-    tiles: ["http://14.225.210.29:8002/v1/map/layer/province_boundary/{z}/{x}/{y}"], // 👈 thay bằng URL thật
-    minzoom: 0,
-    maxzoom: 14,
-  });
-
-  map.addSource("ward_boundary", {
-    type: "vector",
-    tiles: ["http://14.225.210.29:8002/v1/map/layer/ward_boundary/{z}/{x}/{y}"], // 👈 thay bằng URL thật
-    minzoom: 0,
-    maxzoom: 16,
-  });
-  map.addSource("ranhthua_tq", {
-    type: "vector",
-    tiles: ["https://mapv3.meeymap.com/data/HT_TOANQUOC/{z}/{x}/{y}.pbf"], // 👈 thay bằng URL thật
-    minzoom: 16,
-    maxzoom: 19,
-  });
-
-
-  // ─── ADD LAYERS ─────────────────────────────────────
-  map.addLayer({
-    id: "province_boundary_line",
-    type: "line",
-    source: "province_boundary",
-    "source-layer": "province_boundary",
-    paint: {
-      "line-color": "#ef4444", // 🔴 đỏ rõ hơn
-      "line-width": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        5, 1,
-        10, 2,
-        15, 4
-      ],
-      "line-opacity": 0.9,
-    },
-  });
-  
-  map.addLayer({
-    id: "ward_boundary_line",
-    type: "line",
-    source: "ward_boundary",
-    "source-layer": "ward_boundary",
-    paint: {
-      "line-color": "#22d3ee", // 🔵 xanh cyan sáng
-      "line-width": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        8, 0.5,
-        12, 1.2,
-        16, 2
-      ],
-      "line-opacity": 0.85,
-    },
-  });
-  
-  map.addLayer({
-    id: "ranhthua_tq_line",
-    type: "line",
-    source: "ranhthua_tq",
-    "source-layer": "ranhthua_tq",
-    paint: {
-      "line-color": "#facc15", // 🟡 vàng nổi bật
-      "line-width": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        12, 0.3,
-        16, 0.8,
-        20, 1.5
-      ],
-      "line-opacity": 0.7,
-    },
-  });
-
-  // cập nhật lại stats
-  setLayerCount(map.getStyle().layers?.length ?? 0);
-  setSourceCount(Object.keys(map.getStyle().sources ?? {}).length);
-        });
-
-        map.on("move", () => updateMapInfo(map));
-        map.on("zoom", () => updateMapInfo(map));
-        map.on("rotate", () => updateMapInfo(map));
-        map.on("pitch", () => updateMapInfo(map));
-
-        map.on("error", (e) => {
-          console.error("MapLibre error:", e);
-          // Chỉ báo lỗi nghiêm trọng, bỏ qua lỗi tile 404 lẻ tẻ
-          if (e.error?.message && !e.error.message.includes("404")) {
-            setError(e.error.message);
-          }
-        });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        setError(msg);
-        setLoading(false);
-      }
-    };
-
-    initMap();
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, [updateMapInfo]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map?.loaded() || !styleLoaded) return;
-    const o = 0.15 + overlayProgress * 0.75;
-    for (const id of OVERLAY_LAYER_IDS) {
-      if (!map.getLayer(id)) continue;
-      try {
-        map.setPaintProperty(id, "line-opacity", o);
-      } catch {
-        /* layer may not support paint prop */
-      }
-    }
-  }, [overlayProgress, styleLoaded]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map?.loaded() || !styleLoaded) return;
-    const vis = overlayLayersVisible ? "visible" : "none";
-    for (const id of OVERLAY_LAYER_IDS) {
-      if (!map.getLayer(id)) continue;
-      try {
-        map.setLayoutProperty(id, "visibility", vis);
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [overlayLayersVisible, styleLoaded]);
-
-  const onChangeOverlayProgress = useCallback((value: number) => {
-    setOverlayProgress(value);
-  }, []);
-
-  const onPressCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setError("Trình duyệt không hỗ trợ định vị");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const map = mapRef.current;
-        if (!map) return;
-        map.flyTo({
-          center: [pos.coords.longitude, pos.coords.latitude],
-          zoom: Math.max(map.getZoom(), 14),
-          duration: 1200,
-        });
-        setCurrentLocationActive(true);
-      },
-      () => {
-        setCurrentLocationActive(false);
-        setError("Không lấy được vị trí hiện tại");
-      },
-      { enableHighAccuracy: true, timeout: 12_000 }
+    // Thêm nút điều khiển zoom + compass
+    map.addControl(
+      new maplibregl.NavigationControl({
+        visualizePitch: false,
+      }),
+      "top-right"
     );
-  }, []);
 
-  const onPressLayer = useCallback(() => {
-    setOverlayLayersVisible((v) => !v);
-  }, []);
+    // ================== MAP LOAD EVENT ==================
+    map.on("load", () => {
+      console.log("✅ Map loaded successfully!");
 
-  const onPressMeasure = useCallback(() => {
-    console.info("[map v2] Đo khoảng cách — tích hợp sau");
-  }, []);
+      const style = map.getStyle();
 
-  const onPressDraw = useCallback(() => {
-    console.info("[map v2] Vẽ vùng — tích hợp sau");
-  }, []);
+      console.log("📌 Sources:", Object.keys(style.sources));
+      console.log("📌 Total layers:", style.layers.length);
+      console.log(
+        "📌 Layer IDs:",
+        style.layers.map((l: any) => l.id)
+      );
 
-  const logToolbar = useCallback((name: string) => {
-    console.info(`[map v2] ${name}`);
-  }, []);
+      // Kiểm tra source-layer có đúng "vietnam" không
+      const vectorLayers = style.layers.filter(
+        (l: any) => l.type !== "background"
+      );
+      console.log(
+        "📌 Vector layers đang dùng source-layer:",
+        vectorLayers.map((l: any) => ({
+          id: l.id,
+          "source-layer": l["source-layer"],
+        }))
+      );
+
+      // Optional: Click để xem thông tin feature
+      console.log("🖱️ Click bất kỳ đâu trên map để xem thông tin features");
+    });
+
+    // Click handler - hiển thị thông tin feature
+    map.on("click", (e) => {
+      const features = map.queryRenderedFeatures(e.point);
+
+      if (features.length > 0) {
+        console.log(`🖱️ Clicked ${features.length} features`);
+        console.dir(features[0]); // xem chi tiết feature đầu tiên
+      } else {
+        console.log("🖱️ Clicked nhưng không có feature nào");
+      }
+    });
+
+    // Update tọa độ và tile khi di chuyển map
+    map.on("mousemove", (e) => {
+      const lat = e.lngLat.lat;
+      const lng = e.lngLat.lng;
+      const zoom = map.getZoom();
+      const tile = latLngToTile(lat, lng, zoom);
+
+      setCoords({
+        lat,
+        lng,
+        z: tile.z,
+        x: tile.x,
+        y: tile.y,
+      });
+    });
+
+    // Cập nhật khi zoom (float)
+    map.on("zoom", () => {
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      const tile = latLngToTile(center.lat, center.lng, zoom);
+      setCoords({ lat: center.lat, lng: center.lng, ...tile });
+    });
+
+    // Cleanup
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [styleUrl]);
+  const [showLayerPanel, setShowLayerPanel] = useState(false);
+  const [activeLayers, setActiveLayers] = useState<Record<string, boolean>>({});
+
+  const toggleLayer = (map: maplibregl.Map, cfg: any) => {
+    const isActive = activeLayers[cfg.id];
+
+    // bật
+    if (!isActive) {
+      // add source nếu chưa có
+      if (!map.getSource(cfg.source.id)) {
+        map.addSource(cfg.source.id, cfg.source.def);
+      }
+
+      // add layer nếu chưa có
+      if (!map.getLayer(cfg.layer.id)) {
+        map.addLayer({
+          ...cfg.layer,
+          id: cfg.layer.id,
+          source: cfg.source.id,
+        });
+      } else {
+        map.setLayoutProperty(cfg.layer.id, "visibility", "visible");
+      }
+    } else {
+      // tắt
+      if (map.getLayer(cfg.layer.id)) {
+        map.setLayoutProperty(cfg.layer.id, "visibility", "none");
+      }
+    }
+
+    setActiveLayers((prev) => ({
+      ...prev,
+      [cfg.id]: !isActive,
+    }));
+  };
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width: "100vw",
-        height: "100vh",
-        background: "#0f1923",
-        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        overflow: "hidden",
-      }}
-    >
-      {/* ── Bản đồ ── */}
-      <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
+    <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+      {/* Map Container */}
+      <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
+      {/* Button toggle panel */}
+      <button
+        onClick={() => setShowLayerPanel(!showLayerPanel)}
+        style={{
+          position: "absolute",
+          bottom: 12,
+          right: 12,
+          zIndex: 20,
+          background: "#fff",
+          padding: "8px 12px",
+          borderRadius: 6,
+          border: "1px solid #ccc",
+          cursor: "pointer",
+        }}
+      >
+        Layers
+      </button>
 
-      {/* <MapControlLayer
-        progress={overlayProgress}
-        onChangeProgress={onChangeOverlayProgress}
-        onPressCurrentLocation={onPressCurrentLocation}
-        onPressLayer={onPressLayer}
-        onPressMeasure={onPressMeasure}
-        onPressDraw={onPressDraw}
-        currentLocationActive={currentLocationActive}
-        onPressAnalysis={() => logToolbar("Phân tích")}
-        onPressCompare={() => logToolbar("So sánh")}
-        onPressHistory={() => logToolbar("Lịch sử")}
-        onPressPlanning={() => logToolbar("Quy hoạch")}
-        onPressNews={() => logToolbar("Tin tức")}
-        visible={!loading}
-      /> */}
-
-      {/* ── Loading overlay ── */}
-      {loading && (
+      {/* Panel */}
+      {showLayerPanel && (
         <div
           style={{
             position: "absolute",
-            inset: 0,
-            background: "rgba(15,25,35,0.92)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 16,
-            zIndex: 1000,
-          }}
-        >
-          <Spinner />
-          <span style={{ color: "#7dd3fc", fontSize: 13, letterSpacing: 2 }}>
-            LOADING TILES…
-          </span>
-        </div>
-      )}
-
-      {/* ── Error banner ── */}
-      {error && (
-        <div
-          style={{
-            position: "absolute",
-            top: 16,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "#7f1d1d",
-            border: "1px solid #ef4444",
-            color: "#fca5a5",
-            padding: "10px 20px",
+            bottom: 50,
+            right: 12,
+            zIndex: 20,
+            background: "#fff",
+            padding: 12,
             borderRadius: 8,
-            fontSize: 12,
-            maxWidth: "80vw",
-            zIndex: 900,
-            letterSpacing: 0.5,
+            width: 200,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
           }}
         >
-          ⚠ {error}
+          <div style={{ fontWeight: "bold", marginBottom: 8 }}>Chọn layer</div>
+
+          {LAYER_CONFIGS.map((cfg) => (
+            <label key={cfg.id} style={{ display: "block", marginBottom: 6 }}>
+              <input
+                type="checkbox"
+                checked={!!activeLayers[cfg.id]}
+                onChange={() => {
+                  if (!mapRef.current) return;
+                  toggleLayer(mapRef.current, cfg);
+                }}
+              />{" "}
+              {cfg.label}
+            </label>
+          ))}
         </div>
       )}
-
-      {/* ── HUD — góc trái trên ── */}
+      {/* Debug Panel */}
       <div
         style={{
           position: "absolute",
           top: 12,
           left: 12,
-          zIndex: 500,
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
+          background: "rgba(0, 0, 0, 0.75)",
+          color: "white",
+          padding: "12px 16px",
+          borderRadius: "8px",
+          fontSize: "13px",
+          zIndex: 10,
+          maxWidth: "320px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
         }}
       >
-        {/* Logo / title */}
+        <div style={{ fontWeight: "bold", marginBottom: "8px" }}>
+          Vietnam Map Debug
+        </div>
+        {/* Box hiển thị tọa độ và tile */}
         <div
           style={{
-            background: "rgba(10,20,30,0.85)",
-            backdropFilter: "blur(8px)",
-            border: "1px solid rgba(125,211,252,0.25)",
-            borderRadius: 8,
-            padding: "8px 14px",
-            color: "#7dd3fc",
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: 3,
+            marginTop: "8px",
+            borderTop: "1px solid rgba(255,255,255,0.3)",
+            paddingTop: "4px",
           }}
         >
-          MAPLIBRE · PBF
-        </div>
-
-        {/* Stats */}
-        {styleLoaded && (
-          <div
-            style={{
-              background: "rgba(10,20,30,0.82)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(125,211,252,0.15)",
-              borderRadius: 8,
-              padding: "8px 14px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              fontSize: 11,
-              color: "#94a3b8",
-            }}
-          >
-            <StatRow label="LAT" value={mapInfo.center.lat} />
-            <StatRow label="LNG" value={mapInfo.center.lng} />
-            <StatRow label="ZOOM" value={mapInfo.zoom} />
-            <StatRow label="BEARING" value={`${mapInfo.bearing}°`} />
-            <StatRow label="PITCH" value={`${mapInfo.pitch}°`} />
-            <div
-              style={{
-                borderTop: "1px solid rgba(125,211,252,0.1)",
-                marginTop: 4,
-                paddingTop: 4,
-              }}
-            />
-            <StatRow label="LAYERS" value={layerCount} accent />
-            <StatRow label="SOURCES" value={sourceCount} accent />
+          <div>Lat: {coords.lat.toFixed(6)}</div>
+          <div>Lng: {coords.lng.toFixed(6)}</div>
+          <div>
+            Tile z/x/y: {coords.z.toFixed(2)} / {coords.x.toFixed(2)} /{" "}
+            {coords.y.toFixed(2)}
           </div>
-        )}
-      </div>
-
-      {/* ── Style indicator ── */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 30,
-          right: 120,
-          zIndex: 500,
-          background: "rgba(10,20,30,0.75)",
-          backdropFilter: "blur(6px)",
-          border: "1px solid rgba(125,211,252,0.12)",
-          borderRadius: 6,
-          padding: "4px 10px",
-          fontSize: 10,
-          color: styleLoaded ? "#4ade80" : "#f59e0b",
-          letterSpacing: 1,
-        }}
-      >
-        {styleLoaded ? "● STYLE READY" : "○ LOADING STYLE"}
+        </div>
       </div>
     </div>
   );
-}
+};
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function StatRow({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string | number;
-  accent?: boolean;
-}) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 20 }}>
-      <span style={{ color: "#475569", fontSize: 10 }}>{label}</span>
-      <span
-        style={{
-          color: accent ? "#7dd3fc" : "#e2e8f0",
-          fontWeight: accent ? 700 : 400,
-        }}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <div
-      style={{
-        width: 36,
-        height: 36,
-        border: "3px solid rgba(125,211,252,0.15)",
-        borderTop: "3px solid #7dd3fc",
-        borderRadius: "50%",
-        animation: "spin 0.9s linear infinite",
-      }}
-    >
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
+export default MapPage;

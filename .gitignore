@@ -26,3 +26,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .data/
+
+tilemarker/data/
+
+research/data/
+research/sqlite/data/
+research/result_mvt.txt
