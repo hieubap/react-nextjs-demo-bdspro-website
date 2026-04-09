@@ -1,0 +1,61 @@
+/* ví dụ trong globals.css hoặc styles.css */
+.maplibregl-ctrl-bottom-left {
+  bottom: 50px !important;
+  left: 10px; /* nếu muốn chỉnh khoảng cách từ phải */
+}
+
+.search-box-container {
+  /* style mặc định */
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.search-box-action {
+  flex: 1;
+  justify-content: space-between;
+}
+
+/* màn hình nhỏ (mobile) */
+@media (min-width: 838px) {
+  .search-box-container {
+    width: 50%; /* full width trên mobile */
+    margin-bottom: 0;
+  }
+  .search-box-action {
+    width: 100%;
+  }
+}
+
+.modal-bottom {
+  /* top: 0; */
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  display: flex;
+  align-items: flex-end;
+}
+.modal-bottom-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  /* flex: 1; */
+  background-color: white;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  padding: 20px;
+  padding-bottom: 50px;
+  max-width: 500px;
+}
+.translate-y-full {
+  transform: translateY(100%);
+}
+.pointer {
+  cursor: pointer;
+}
+
+.text-12 {
+  font-size: 12px;
+}

@@ -173,6 +173,7 @@ html {
   --font-inter: ${inter.variable};
 }
         `}</style>
+        <link rel="stylesheet" href="/style.css" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

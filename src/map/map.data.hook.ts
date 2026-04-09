@@ -30,11 +30,9 @@ export function useMapData(map: L.Map | null) {
       // Import GeoJSON data
       const { dtvtData } = await import("../../public/data/dtvt.js");
       const { huyenData } = await import("../../public/data/huyen.js");
-      const { qhcData } = await import("../../public/data/qhc.js");
-      const { qhpkData } = await import("../../public/data/qhpk.js");
       const { tinhData } = await import("../../public/data/tinhVN.js");
 
-      const geoJsonLayers = [dtvtData, huyenData, qhcData, qhpkData, tinhData];
+      const geoJsonLayers = [dtvtData, huyenData, tinhData];
 
       geoJsonLayers.forEach((geoJsonData) => {
         if (geoJsonData && geoJsonData.features) {
