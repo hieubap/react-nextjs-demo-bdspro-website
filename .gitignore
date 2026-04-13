@@ -28,6 +28,7 @@ next-env.d.ts
 .data/
 
 tilemarker/data/
+tilemarker1/data/
 
 research/data/
 research/sqlite/data/

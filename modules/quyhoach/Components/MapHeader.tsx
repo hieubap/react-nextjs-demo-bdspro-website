@@ -11,12 +11,14 @@ const MapHeader = ({
   onPressHistory,
   onPressPlanning,
   onPressNews,
+  onPressLayer,
 }: {
   onPressAnalysis: () => void;
   onPressCompare: () => void;
   onPressHistory: () => void;
   onPressPlanning: () => void;
   onPressNews: () => void;
+  onPressLayer: () => void;
 }) => {
   return (
     <div className="flex flex-wrap px-4 py-2 gap-2 justify-between">
@@ -44,6 +46,7 @@ const MapHeader = ({
         onPressHistory={onPressHistory}
         onPressPlanning={onPressPlanning}
         onPressNews={onPressNews}
+        onPressLayer={onPressLayer}
       />
     </div>
   );

@@ -1,20 +1,20 @@
 server=root@14.225.210.29
-path=/root/server/nextjs-landing-page
+path=/root/server/landing_page
 yarn build
 
-ssh $server 'mkdir -p /root/server/nextjs-landing-page
+ssh $server 'mkdir -p /root/server/landing_page
 cd '$path'
 rm -rf .next
 '
 
-scp -r ./.next $server:$path/
-scp package.json $server:$path/package.json
-scp Dockerfile $server:$path/Dockerfile
-scp -r ./public $server:$path/
+rsync -avz --progress ./.next $server:$path/
+rsync -avz --progress package.json $server:$path/
+rsync -avz --progress Dockerfile $server:$path/
+rsync -avz --progress ./public $server:$path/
 
 ssh $server '
 cd '$path'
-container_name=nextjs-landing-page
+container_name=landing_page
 port=3103
 container=$(docker ps -a -q --filter name="$container_name")
 echo "Container ID: $container"

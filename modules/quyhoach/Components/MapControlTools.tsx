@@ -19,9 +19,9 @@ const hotColors = {
 const TOOLS = [
   { Svg: Ruler2SVG, label: "Đo", key: "measure" as const },
   { Svg: PenTool2SVG, label: "Vẽ vùng", key: "draw" as const },
-  { Svg: MapSVG, label: "Hiển thị lớp", key: "layer" as const },
-  { Svg: EyeSVG, label: "Theo dõi", key: "tracking" as const },
-  { Svg: StarSVG, label: "Đã lưu", key: "saved" as const },
+  // { Svg: MapSVG, label: "Hiển thị lớp", key: "layer" as const },
+  // { Svg: EyeSVG, label: "Theo dõi", key: "tracking" as const },
+  // { Svg: StarSVG, label: "Đã lưu", key: "saved" as const },
 ] as const;
 
 type MapControlProps = {
@@ -30,6 +30,7 @@ type MapControlProps = {
   onPressMeasure?: () => void;
   onPressDraw?: () => void;
   currentLocationActive?: boolean;
+  layerActive?: number;
 };
 
 export const MapControlTools = memo(
@@ -39,6 +40,7 @@ export const MapControlTools = memo(
     onPressMeasure,
     onPressDraw,
     currentLocationActive,
+    layerActive,
   }: MapControlProps) => {
     const handlers = {
       location: onPressCurrentLocation,
@@ -79,9 +81,17 @@ export const MapControlTools = memo(
                 key={label}
                 onClick={handlers[key as keyof typeof handlers]}
                 aria-label={label}
-                className="flex justify-center items-center w-10 h-10 border-b border-gray-300 bg-white cursor-pointer"
+                className={`flex justify-center items-center w-10 h-10 border-b border-gray-300 bg-white cursor-pointer ${
+                  layerActive === index ? "bg-blue-200" : "bg-white"
+                }`}
               >
-                <Svg width={24} height={24} className="fill-[#71717A]" />
+                <Svg
+                  width={24}
+                  height={24}
+                  className={`fill-[#71717A] ${
+                    layerActive === index ? "fill-blue-200" : "fill-[#71717A]"
+                  }`}
+                />
               </button>
             );
           })}

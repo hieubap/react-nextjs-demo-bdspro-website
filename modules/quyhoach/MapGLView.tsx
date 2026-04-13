@@ -14,6 +14,9 @@ const MapGLView: React.FC = () => {
   // Style URL (có cache-busting để dễ reload khi regenerate style.json)
   const [styleUrl] = useState(
     "http://14.225.210.29:8002/v1/map/config/style.json?_=" + Date.now()
+
+    // "http://[::]:8080/data/v3.json"
+    // "http://14.225.210.29:8031/styles/basic-preview/style.json?_=" + Date.now()
   );
   const pickLayerModalRef = useRef<MapTooltipHandle>(null);
   // State để lưu tọa độ và tile z/x/y
@@ -415,6 +418,8 @@ const MapGLView: React.FC = () => {
     }));
   };
 
+  const [layerActive, setLayerActive] = useState(-1);
+
   return (
     <div style={{ width: "100%", height: "100dvh", position: "relative" }}>
       {/* Map Container */}
@@ -430,6 +435,7 @@ const MapGLView: React.FC = () => {
         onPressCurrentLocation={() => {}}
         onPressMeasure={() => {}}
         onPressDraw={() => {}}
+        layerActive={layerActive}
       />
       <PickLayerModal
         ref={pickLayerModalRef}

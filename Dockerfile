@@ -18,8 +18,6 @@ RUN npm install --legacy-peer-deps
 # Copy the rest of the source code
 COPY . .
 
-COPY .next .next
-
 # Expose port
 EXPOSE 3000
 

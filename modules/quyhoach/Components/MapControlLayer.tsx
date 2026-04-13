@@ -15,6 +15,7 @@ export interface MapControlLayerProps {
   onPressMeasure: () => void;
   onPressDraw: () => void;
   currentLocationActive?: boolean;
+  layerActive?: number;
   onPressAnalysis: () => void;
   onPressCompare: () => void;
   onPressHistory: () => void;
@@ -31,6 +32,7 @@ const MapControlLayer = memo(function MapControlLayer({
   onPressMeasure,
   onPressDraw,
   currentLocationActive,
+  layerActive,
   onPressAnalysis,
   onPressCompare,
   onPressHistory,
@@ -47,6 +49,7 @@ const MapControlLayer = memo(function MapControlLayer({
           onPressHistory={onPressHistory}
           onPressPlanning={onPressPlanning}
           onPressNews={onPressNews}
+          onPressLayer={onPressLayer}
         />
       </div>
 
@@ -57,6 +60,7 @@ const MapControlLayer = memo(function MapControlLayer({
           onPressMeasure={onPressMeasure}
           onPressDraw={onPressDraw}
           currentLocationActive={currentLocationActive}
+          layerActive={layerActive}
         />
       </div>
 

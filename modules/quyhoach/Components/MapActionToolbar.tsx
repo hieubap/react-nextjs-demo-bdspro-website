@@ -21,6 +21,7 @@ interface MapActionToolbarProps {
   onPressHistory?: () => void;
   onPressPlanning?: () => void;
   onPressNews?: () => void;
+  onPressLayer?: () => void;
 }
 
 //
@@ -50,7 +51,7 @@ const TOOLBAR_ITEMS = [
       label: "Hiển thị",
       Icon: LayerSVG,
       type: "half",
-      action: "onPressPlanning",
+      action: "onPressLayer",
     },
     {
       key: "news",
@@ -125,6 +126,7 @@ const MapActionToolbar = ({
   onPressHistory,
   onPressPlanning,
   onPressNews,
+  onPressLayer,
 }: MapActionToolbarProps) => {
   //
   // ===== STABLE HANDLERS MAP
@@ -136,6 +138,7 @@ const MapActionToolbar = ({
       onPressAnalysis,
       onPressCompare,
       onPressHistory,
+      onPressLayer,
     }),
     [
       onPressPlanning,
@@ -143,6 +146,7 @@ const MapActionToolbar = ({
       onPressAnalysis,
       onPressCompare,
       onPressHistory,
+      onPressLayer,
     ]
   );
 
@@ -162,9 +166,9 @@ const MapActionToolbar = ({
             setActiveTab(activeTab === "planning" ? "news" : "planning");
           }}
         >
-          <tabData.Icon className="w-5 h-5" color="white" />
+          <tabData.Icon className="w-5 h-5 text-white" width={20} height={20} />
           <div className="text-12 text-sm text-white">{tabData.label}</div>
-          <ArrowUpSVG className="w-5 h-5" color="white" />
+          <ArrowUpSVG className="w-5 h-5 text-white" />
         </div>
       </div>
       {TOOLBAR_ITEMS.map((row, index) => (
